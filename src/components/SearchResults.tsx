@@ -1,4 +1,5 @@
 import React, { useRef } from 'react';
+import { FileSpreadsheet, Hash, Calendar, Eye } from 'lucide-react';
 import { FileResult } from '../types';
 
 interface SearchResultsProps {
@@ -56,21 +57,48 @@ export default function SearchResults({ results, searchInput }: SearchResultsPro
 
         return (
           <div key={fileIndex} className="bg-white p-4 rounded-lg shadow-sm border">
-            <div className="flex items-center justify-between mb-4">
-              <h4 className="text-lg font-semibold text-blue-600">
-                File: {fileResult.fileName} ({fileResult.matches.length} matches)
-              </h4>
-              <div className="text-sm text-gray-600">
-                Jump to: {lineLinks}
+            <div className="mb-6">
+              <div className="flex items-center gap-3 mb-3">
+                <FileSpreadsheet className="w-6 h-6 text-blue-600" />
+                <h4 className="text-xl font-bold text-blue-800">
+                  {fileResult.fileName}
+                </h4>
+              </div>
+              
+              <div className="bg-blue-50 p-4 rounded-lg mb-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                  <div className="flex items-center gap-2">
+                    <Hash className="w-4 h-4 text-blue-600" />
+                    <span className="font-medium">Total Matches:</span>
+                    <span className="bg-blue-600 text-white px-2 py-1 rounded-full text-xs font-bold">
+                      {fileResult.matches.length}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Eye className="w-4 h-4 text-blue-600" />
+                    <span className="font-medium">Quick Jump:</span>
+                    <div className="flex flex-wrap gap-1">
+                      {lineLinks.slice(0, 5)}
+                      {lineLinks.length > 5 && (
+                        <span className="text-gray-500 text-xs">+{lineLinks.length - 5} more</span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Calendar className="w-4 h-4 text-blue-600" />
+                    <span className="font-medium">File Type:</span>
+                    <span className="text-green-600 font-medium">Excel Spreadsheet</span>
+                  </div>
+                </div>
               </div>
             </div>
             
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto border rounded-lg">
               <table className="min-w-full border-collapse">
                 <thead>
-                  <tr>
+                  <tr className="bg-gradient-to-r from-blue-100 to-blue-50">
                     {headers.map((header, index) => (
-                      <th key={index} className="bg-blue-100 border border-gray-300 px-4 py-3 text-left font-semibold text-blue-800">
+                      <th key={index} className="border-r border-gray-300 px-6 py-4 text-left font-bold text-blue-900 text-sm uppercase tracking-wide">
                         {header}
                       </th>
                     ))}
@@ -83,13 +111,19 @@ export default function SearchResults({ results, searchInput }: SearchResultsPro
                       <tr
                         key={matchIndex}
                         id={uniqueId}
-                        className="hover:bg-gray-50 transition-colors duration-200"
+                        className="hover:bg-blue-50 transition-all duration-200 border-b border-gray-200 group"
                       >
-                        <td className="border border-gray-300 px-4 py-3 font-medium">{match.serialNumber}</td>
+                        <td className="border-r border-gray-300 px-6 py-4 font-bold text-blue-700 bg-blue-25 group-hover:bg-blue-100 transition-colors">
+                          <div className="flex items-center gap-2">
+                            <span className="bg-blue-600 text-white px-2 py-1 rounded-full text-xs font-bold">
+                              {match.serialNumber}
+                            </span>
+                          </div>
+                        </td>
                         {match.data.map((cell, cellIndex) => (
                           <td
                             key={cellIndex}
-                            className="border border-gray-300 px-4 py-3"
+                            className="border-r border-gray-300 px-6 py-4 text-sm leading-relaxed group-hover:bg-blue-25 transition-colors"
                             dangerouslySetInnerHTML={{ __html: cell }}
                           />
                         ))}
@@ -98,6 +132,17 @@ export default function SearchResults({ results, searchInput }: SearchResultsPro
                   })}
                 </tbody>
               </table>
+            </div>
+            
+            <div className="mt-4 p-3 bg-gray-50 rounded-lg">
+              <div className="flex items-center justify-between text-sm text-gray-600">
+                <span>Showing {fileResult.matches.length} matching records</span>
+                <div className="flex gap-4">
+                  <span>Search terms highlighted in yellow</span>
+                  <span>•</span>
+                  <span>Click row numbers to jump between results</span>
+                </div>
+              </div>
             </div>
           </div>
         );

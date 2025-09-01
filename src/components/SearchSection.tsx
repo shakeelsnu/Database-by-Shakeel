@@ -177,46 +177,61 @@ export default function SearchSection({ files }: SearchSectionProps) {
       </div>
 
       {showResults && (
-        <div className="bg-gray-50 p-6 rounded-lg shadow-md">
-          <div className="mb-4 space-y-2">
+        <div className="bg-white p-8 rounded-xl shadow-lg border border-gray-200">
+          <div className="mb-6 space-y-4">
+            <div className="flex items-center gap-3 mb-4">
+              <Search className="w-6 h-6 text-blue-600" />
+              <h3 className="text-2xl font-bold text-blue-800">Search Results</h3>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-lg">
+              <div className="text-center">
+                <div className="text-3xl font-bold text-blue-600">{totalMatches}</div>
+                <div className="text-sm text-gray-600 font-medium">Total Matches Found</div>
+              </div>
+              <div className="text-center">
+                <div className="text-3xl font-bold text-green-600">{results.length}</div>
+                <div className="text-sm text-gray-600 font-medium">Files with Results</div>
+              </div>
+              <div className="text-center">
+                <div className="text-3xl font-bold text-purple-600">{files.length}</div>
+                <div className="text-sm text-gray-600 font-medium">Total Files Uploaded</div>
+              </div>
+            </div>
+            
             <p className="text-sm text-gray-600">
               <span className="font-medium">Last Excel Upload:</span> {files.length > 0 ? files[files.length - 1].uploadDate : 'Not uploaded yet'}
             </p>
-            <p className="text-lg font-semibold">
-              Total Matches: <span className="text-blue-600">{totalMatches}</span>
-            </p>
+            
             {matchesPerTerm.size > 0 && (
-              <div className="text-sm text-gray-600">
-                <span className="font-medium">Matches per keyword:</span>{' '}
-                {Array.from(matchesPerTerm.entries()).map(([term, count], index) => (
-                  <span key={term}>
-                    {index > 0 && ', '}
-                    <span className="font-semibold">{term}</span>: {count}
-                  </span>
-                ))}
+              <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
+                <h4 className="font-semibold text-yellow-800 mb-2">Keyword Breakdown:</h4>
+                <div className="flex flex-wrap gap-2">
+                  {Array.from(matchesPerTerm.entries()).map(([term, count]) => (
+                    <span key={term} className="bg-yellow-200 text-yellow-800 px-3 py-1 rounded-full text-sm font-medium">
+                      <span className="font-bold">{term}</span>: {count} matches
+                    </span>
+                  ))}
+                </div>
               </div>
             )}
-          </div>
-
-          <div className="flex items-center gap-2 mb-4">
-            <Search className="w-5 h-5 text-blue-600" />
-            <h3 className="text-lg font-semibold text-blue-600">Search Results</h3>
           </div>
 
           <SearchResults results={results} searchInput={searchInput} />
 
           {results.length > 0 && (
-            <div className="mt-6 flex gap-4">
+            <div className="mt-8 flex flex-wrap gap-4 p-4 bg-gray-50 rounded-lg">
+              <h4 className="w-full text-lg font-semibold text-gray-800 mb-2">Export Options:</h4>
               <button
                 onClick={exportToExcel}
-                className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors font-medium flex items-center gap-2"
+                className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-all duration-200 font-medium flex items-center gap-2 shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
               >
                 <Download className="w-4 h-4" />
                 Export to Excel
               </button>
               <button
                 onClick={printResults}
-                className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors font-medium flex items-center gap-2"
+                className="bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700 transition-all duration-200 font-medium flex items-center gap-2 shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
               >
                 <FileText className="w-4 h-4" />
                 Download as PDF
