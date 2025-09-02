@@ -195,12 +195,12 @@ export default function SearchSection({ files }: SearchSectionProps) {
               </div>
               <div className="text-center">
                 <div className="text-3xl font-bold text-purple-600">{files.length}</div>
-                <div className="text-sm text-gray-600 font-medium">Total Files Uploaded</div>
+                <div className="text-sm text-gray-600 font-medium">Total Files Available</div>
               </div>
             </div>
             
-            <p className="text-sm text-gray-600">
-              <span className="font-medium">Last Excel Upload:</span> {files.length > 0 ? files[files.length - 1].uploadDate : 'Not uploaded yet'}
+            <p className="text-sm text-gray-600 mt-4">
+              <span className="font-medium">Fleet Data:</span> Pre-loaded system data available for immediate searching
             </p>
             
             {matchesPerTerm.size > 0 && (

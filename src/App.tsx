@@ -40,10 +40,15 @@ function App() {
           <div className="flex items-center justify-center gap-3 mb-4">
             <BarChart3 className="w-8 h-8 text-blue-600" />
             <h1 className="text-4xl font-bold text-blue-600 drop-shadow-sm">
-              Excel Search Dashboard
+              Fleet Management Dashboard
             </h1>
           </div>
           <p className="text-lg text-gray-600">By Shakeel</p>
+          <div className="mt-4 bg-green-50 border border-green-200 rounded-lg p-4 max-w-2xl mx-auto">
+            <p className="text-green-800 font-medium">
+              🚀 Fleet data is now permanently available! Search through {files.length > 0 ? files.find(f => f.fileName === 'Fleet Data.csv')?.data.split('\n').length - 1 || '70+' : '70+'} equipment records instantly.
+            </p>
+          </div>
         </div>
 
         {/* Admin Toggle Button */}
