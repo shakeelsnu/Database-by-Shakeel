@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Excel Search Dashboard</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: linear-gradient(to right, #f0f8ff, #e6f7ff);
+            color: #333;
+            padding: 30px;
+        }
+        h1 {
+            color: #007acc;
+            text-shadow: 1px 1px 2px #ccc;
+        }
+        input[type="text"], input[type="password"], input[type="file"], input[type="number"] {
+            padding: 10px;
+            margin: 10px 0;
+            border: 2px solid #007acc;
+            border-radius: 5px;
+            width: 300px;
+        }
+        button {
+            padding: 10px 15px;
+            margin: 5px;
+            border: none;
+            border-radius: 5px;
+            background-color: #007acc;
+            color: white;
+            cursor: pointer;
+            box-shadow: 1px 1px 5px #aaa;
+            transition: background-color 0.3s ease;
+        }
+        button:hover {
+            background-color: #005f99;
+        }
+        .highlight {
+            background-color: yellow;
+            font-weight: bold;
+        }
+        .jump-highlight {
+            background-color: #ffe0b2;
+            transition: background-color 1s ease-out;
+        }
+        .hidden {
+            display: none;
+        }
+        #results {
+            margin-top: 20px;
+            background-color: #f9f9f9;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px #ccc;
+            overflow-x: auto;
+        }
+        #admin-section {
+            margin-top: 20px;
+            background-color: #fff0f5;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px #ccc;
+        }
+        #timestamp {
+            margin-top: 30px;
+            font-style: italic;
+            color: #555;
+        }
+        #uploadStatus {
+            font-weight: bold;
+            margin-top: 10px;
+        }
+        #uploadStatus p {
+            margin: 5px 0;
+        }
+        .uploading {
+            color: orange;
+        }
+        .uploaded {
+            color: green;
+        }
+        .result-section {
+            margin-bottom: 20px;
+            background-color: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 0 5px rgba(0,0,0,0.1);
+        }
+        .result-section h4 {
+            margin: 0 0 10px 0;
+            color: #007acc;
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .result-section h4 .line-links {
+            font-weight: normal;
+            margin-left: 10px;
+        }
+        .result-section h4 .line-links a {
+            color: #005f99;
+            text-decoration: underline;
+            margin-left: 5px;
+        }
+        table {
+            min-width: 800px;
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 10px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+        th {
+            background-color: #e0f0ff;
+            font-weight: bold;
+        }
+        #uploadedFilesList {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #f0f8ff;
+            border-radius: 5px;
+        }
+        #uploadedFilesList h5 {
+            margin-top: 0;
+        }
+        .file-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px;
+            border-bottom: 1px solid #cceeff;
+        }
+        .file-item:last-child {
+            border-bottom: none;
+        }
+        .file-item button {
+            padding: 5px 10px;
+            font-size: 0.8em;
+            background-color: #ff4d4d;
+            color: white;
+            border-radius: 4px;
+        }
+        /* Custom Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            background-color: #fefefe;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 400px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            position: relative;
+        }
+        .modal-header {
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+            margin-bottom: 15px;
+        }
+        .modal-header h2 {
+            margin: 0;
+            color: #007acc;
+        }
+        .close-button {
+            color: #aaa;
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .close-button:hover,
+        .close-button:focus {
+            color: #000;
+            text-decoration: none;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <h1>📊 Excel Search Dashboard By Shakeel</h1>
+
+    <button onclick="toggleAdmin()">Admin Mode</button>
+
+    <div id="admin-login" class="hidden">
+        <h3>🔐 Admin Login</h3>
+        <input type="text" id="adminUser" placeholder="Username" /><br/>
+        <input type="password" id="adminPassword" placeholder="Password" />
+        <button onclick="adminLogin()">Login</button>
+    </div>
+
+    <div id="admin-section" class="hidden">
+        <h3>👨‍💼 Admin Panel</h3>
+        <p>Your IP: <span id="ipDisplay">Fetching...</span></p>
+        <input type="file" id="excelUpload" accept=".xlsx,.xls" multiple />
+        <button onclick="triggerUpload()">Upload</button>
+        <div id="uploadStatus"></div>
+
+        <div id="uploadedFilesList">
+            <h5>Uploaded Files</h5>
+            <p>No files uploaded yet.</p>
+        </div>
+    </div>
+
+    <p id="timestamp">Page loaded: <span id="lastUpdated"></span></p>
+
+    <input type="text" id="searchInput" placeholder="Search keywords separated by commas..." />
+    <button onclick="performSearch()">Search</button>
+
+    <div id="results" class="hidden">
+        <p><strong>Last Excel Upload:</strong> <span id="excelUploadDate">Not uploaded yet</span></p>
+        <p>Total Matches: <span id="totalMatches">0</span></p>
+        <p id="perTermMatches"></p>
+        <h3>🔎 Search Results</h3>
+        <div id="resultText"></div>
+        <div id="exportButtons" style="margin-top: 15px;">
+            <button onclick="exportToExcel()">📊 Export to Excel</button>
+            <button onclick="printResults()">🖨️ Download as PDF</button>
+        </div>
+    </div>
+
+    <!-- Custom Modal HTML -->
+    <div id="custom-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-button" onclick="closeCustomModal()">&times;</span>
+            <div class="modal-header">
+                <h2 id="modal-title">Notification</h2>
+            </div>
+            <p id="modal-message"></p>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+    <script>
+        document.getElementById("searchInput").addEventListener("keypress", function(e) {
+            if (e.key === "Enter") performSearch();
+        });
+
+        // Helper function to show a custom modal
+        function showCustomAlert(message) {
+            const modal = document.getElementById("custom-modal");
+            const modalMessage = document.getElementById("modal-message");
+            modalMessage.textContent = message;
+            modal.style.display = "flex";
+        }
+
+        // Helper function to close the custom modal
+        function closeCustomModal() {
+            document.getElementById("custom-modal").style.display = "none";
+        }
+
+        // Helper function to read a single file
+        function readFile(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        const data = new Uint8Array(e.target.result);
+                        const workbook = XLSX.read(data, { type: 'array' });
+                        const sheet = workbook.Sheets[workbook.SheetNames[0]];
+                        const json = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+                        const rawText = json.map(row => row.join("\t")).join("\n");
+                        resolve({ fileName: file.name, data: rawText, uploadDate: new Date().toLocaleString() });
+                    } catch (error) {
+                        reject(error);
+                    }
+                };
+                reader.onerror = reject;
+                reader.readAsArrayBuffer(file);
+            });
+        }
+
+        // Renders the list of uploaded files in the admin panel
+        function renderFilesList() {
+            const filesListContainer = document.getElementById("uploadedFilesList");
+            const storedData = JSON.parse(localStorage.getItem("excelFilesData")) || [];
+
+            if (storedData.length === 0) {
+                filesListContainer.innerHTML = '<h5>Uploaded Files</h5><p>No files uploaded yet.</p>';
+                return;
+            }
+
+            let listHtml = '<h5>Uploaded Files</h5>';
+            storedData.forEach(file => {
+                listHtml += `
+                    <div class="file-item">
+                        <span>${file.fileName} (${file.uploadDate})</span>
+                        <button onclick="deleteFile('${file.fileName}')">Delete</button>
+                    </div>
+                `;
+            });
+            filesListContainer.innerHTML = listHtml;
+        }
+
+        // Deletes a file from localStorage
+        function deleteFile(fileName) {
+            let storedData = JSON.parse(localStorage.getItem("excelFilesData")) || [];
+            const updatedData = storedData.filter(file => file.fileName !== fileName);
+            localStorage.setItem("excelFilesData", JSON.stringify(updatedData));
+            renderFilesList();
+        }
+
+        // Function to handle clicking on a line number to scroll to it
+        function jumpToLine(event) {
+            event.preventDefault();
+            const targetId = event.target.getAttribute("href").substring(1); // Remove the #
+            const targetElement = document.getElementById(targetId);
+
+            if (targetElement) {
+                targetElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+                // Add a temporary highlight to the row
+                targetElement.classList.add('jump-highlight');
+                setTimeout(() => {
+                    targetElement.classList.remove('jump-highlight');
+                }, 1500); // Remove the highlight after 1.5 seconds
+            }
+        }
+
+        async function performSearch() {
+            const input = document.getElementById("searchInput").value.trim();
+            const resultText = document.getElementById("resultText");
+            const resultsContainer = document.getElementById("results");
+
+            // Display a message if the search input is empty
+            if (!input) {
+                resultText.innerHTML = "<p>Please type something to search.</p>";
+                resultsContainer.classList.remove("hidden");
+                document.getElementById("perTermMatches").innerText = "";
+                document.getElementById("totalMatches").innerText = "0";
+                return;
+            }
+
+            const terms = input.split(",").map(term => term.trim().toLowerCase());
+            const storedData = JSON.parse(localStorage.getItem("excelFilesData")) || [];
+
+            if (storedData.length === 0) {
+                resultText.innerHTML = "<p>No data available. Please upload a file.</p>";
+                resultsContainer.classList.remove("hidden");
+                document.getElementById("perTermMatches").innerText = "";
+                document.getElementById("totalMatches").innerText = "0";
+                return;
+            }
+
+            let allResultsHTML = [];
+            let totalMatches = 0;
+            let serialNumber = 1;
+            const matchesPerTerm = new Map();
+
+            storedData.forEach(fileData => {
+                const lines = fileData.data.split("\n");
+                if (lines.length < 2) return;
+
+                const headers = lines[0].split("\t");
+                const remarksIndex = headers.length - 1;
+
+                let fileResults = [];
+
+                for (let i = 1; i < lines.length; i++) {
+                    const line = lines[i];
+                    let cols = line.split("\t");
+                    let matched = false;
+                    let highlightedCols = cols.map(col => {
+                        let highlighted = col;
+                        terms.forEach(term => {
+                            const regex = new RegExp(`(${term})`, "gi");
+                            if (regex.test(col)) {
+                                matched = true;
+                                highlighted = highlighted.replace(regex, "<span class='highlight'>$1</span>");
+                                // Increment the count for the matched term
+                                matchesPerTerm.set(term, (matchesPerTerm.get(term) || 0) + 1);
+                            }
+                        });
+                        return highlighted;
+                    });
+
+                    if (matched) {
+                        fileResults.push({ lineNo: i + 1, data: highlightedCols });
+                    }
+                }
+
+                const fileResultsWithSerial = fileResults.map(row => ({
+                    ...row,
+                    serialNumber: serialNumber++
+                }));
+
+                if (fileResultsWithSerial.length > 0) {
+                    const lineLinksHtml = fileResultsWithSerial.map(row => {
+                        const uniqueId = `result-${fileData.fileName.replace(/\s/g, '-')}-${row.serialNumber}`;
+                        return `<a href="#${uniqueId}" onclick="jumpToLine(event)">${row.serialNumber}</a>`;
+                    }).join(", ");
+
+                    let tableHtml = `
+                        <div class="result-section">
+                            <h4>File Name: ${fileData.fileName} (Lines found: ${fileResultsWithSerial.length}) <span class="line-links">[${lineLinksHtml}]</span></h4>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>S.NO</th>
+                                        ${headers.map(h => `<th>${h}</th>`).join("")}
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${fileResultsWithSerial.map(row => {
+                                        const uniqueId = `result-${fileData.fileName.replace(/\s/g, '-')}-${row.serialNumber}`;
+                                        return `<tr id="${uniqueId}" data-line-no="${row.lineNo}" data-file-name="${fileData.fileName}">
+                                                <td>${row.serialNumber}</td>
+                                                ${row.data.map(cell => `<td>${cell}</td>`).join("")}
+                                            </tr>`;
+                                    }).join("")}
+                                </tbody>
+                            </table>
+                        </div>
+                    `;
+                    allResultsHTML.push(tableHtml);
+                    totalMatches += fileResultsWithSerial.length;
+                }
+            });
+
+            document.getElementById("totalMatches").innerText = totalMatches;
+
+            // Display matches per keyword
+            let perTermText = "Matches per keyword: ";
+            if (matchesPerTerm.size > 0) {
+                const termStrings = [];
+                matchesPerTerm.forEach((count, term) => {
+                    termStrings.push(`<b>${term}</b>: ${count}`);
+                });
+                perTermText += termStrings.join(", ");
+            } else {
+                perTermText = "No keywords matched.";
+            }
+            document.getElementById("perTermMatches").innerHTML = perTermText;
+
+            if (allResultsHTML.length > 0) {
+                resultText.innerHTML = allResultsHTML.join("");
+            } else {
+                resultText.innerHTML = "<p>No matches found.</p>";
+            }
+
+            resultsContainer.classList.remove("hidden");
+        }
+
+        function toggleAdmin() {
+            document.getElementById("admin-login").classList.toggle("hidden");
+        }
+
+        function adminLogin() {
+            const username = document.getElementById("adminUser").value.trim().toLowerCase();
+            const password = document.getElementById("adminPassword").value.trim().toLowerCase();
+
+            if (username === "shakeel" && password === "9332") {
+                document.getElementById("admin-section").classList.remove("hidden");
+                fetch("https://api.ipify.org?format=json")
+                    .then(res => res.json())
+                    .then(data => {
+                        document.getElementById("ipDisplay").innerText = data.ip;
+                    });
+                renderFilesList(); // Display file list after successful login
+            } else {
+                showCustomAlert("Incorrect username or password.");
+            }
+        }
+
+        async function triggerUpload() {
+            const fileInput = document.getElementById("excelUpload");
+            const files = fileInput.files;
+            if (files.length === 0) return;
+
+            const uploadStatus = document.getElementById("uploadStatus");
+            uploadStatus.innerHTML = ""; // Clear previous status messages
+
+            let storedData = JSON.parse(localStorage.getItem("excelFilesData")) || [];
+
+            const filePromises = Array.from(files).map(file => {
+                const statusEl = document.createElement("p");
+                statusEl.innerText = `Uploading: ${file.name}...`;
+                statusEl.classList.add("uploading");
+                uploadStatus.appendChild(statusEl);
+
+                return readFile(file).then(fileData => {
+                    statusEl.innerText = `✅ Upload successful: ${file.name}`;
+                    statusEl.classList.remove("uploading");
+                    statusEl.classList.add("uploaded");
+                    return fileData;
+                }).catch(err => {
+                    statusEl.innerText = `❌ Upload failed: ${file.name}`;
+                    statusEl.classList.remove("uploading");
+                    statusEl.style.color = 'red';
+                    console.error("File read error:", err);
+                    return null;
+                });
+            });
+
+            const uploadedFilesData = (await Promise.all(filePromises)).filter(Boolean);
+
+            // Update the stored data with the newly uploaded files
+            uploadedFilesData.forEach(newFile => {
+                const existingIndex = storedData.findIndex(f => f.fileName === newFile.fileName);
+                if (existingIndex > -1) {
+                    // Replace the existing file
+                    storedData[existingIndex] = newFile;
+                } else {
+                    // Add a new file
+                    storedData.push(newFile);
+                }
+            });
+
+            localStorage.setItem("excelFilesData", JSON.stringify(storedData));
+
+            const uploadDate = new Date().toLocaleString();
+            document.getElementById("excelUploadDate").innerText = uploadDate;
+            renderFilesList();
+        }
+
+        window.onload = function() {
+            document.getElementById("lastUpdated").innerText = new Date().toLocaleString();
+            const savedDate = localStorage.getItem("excelUploadDate");
+            if (savedDate) {
+                document.getElementById("excelUploadDate").innerText = savedDate;
+            }
+        };
+
+        function exportToExcel() {
+            const allTables = document.querySelectorAll("#resultText table");
+            if (allTables.length === 0) {
+                showCustomAlert("No results to export.");
+                return;
+            }
+
+            const workbook = XLSX.utils.book_new();
+
+            allTables.forEach((table, index) => {
+                const worksheet = XLSX.utils.table_to_sheet(table);
+                const sheetName = `Results Sheet ${index + 1}`;
+                XLSX.utils.book_append_sheet(workbook, worksheet, sheetName);
+            });
+
+            XLSX.writeFile(workbook, "search_results.xlsx");
+        }
+
+        function printResults() {
+            const printWindow = window.open("", "", "width=800,height=600");
+            const content = document.getElementById("resultText").innerHTML;
+            printWindow.document.write(`
+                <html>
+                    <head>
+                        <title>Search Results</title>
+                        <style>
+                            table {
+                                width: 100%;
+                                border-collapse: collapse;
+                                margin-bottom: 10px;
+                            }
+                            th, td {
+                                border: 1px solid #ddd;
+                                padding: 12px;
+                                text-align: left;
+                            }
+                            th {
+                                background-color: #e0f0ff;
+                                font-weight: bold;
+                            }
+                        </style>
+                    </head>
+                    <body>
+                        <h3>Search Results</h3>
+                        ${content}
+                    </body>
+                </html>
+            `);
+            printWindow.document.close();
+            printWindow.focus();
+            printWindow.print();
+        }
+    </script>
+</body>
+</html>
