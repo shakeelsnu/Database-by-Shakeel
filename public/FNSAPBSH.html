@@ -276,9 +276,9 @@
                         const data = new Uint8Array(e.target.result);
                         const workbook = XLSX.read(data, { type: 'array' });
                         const sheet = workbook.Sheets[workbook.SheetNames[0]];
-                        const json = XLSX.utils.sheet_to_json(sheet, { header: 1 });
-                        const rawText = json.map(row => row.join("\t")).join("\n");
-                        resolve({ fileName: file.name, data: rawText, uploadDate: new Date().toLocaleString() });
+                        // Store data as a JSON array of objects for robust searching
+                        const jsonData = XLSX.utils.sheet_to_json(sheet);
+                        resolve({ fileName: file.name, data: jsonData, uploadDate: new Date().toLocaleString() });
                     } catch (error) {
                         reject(error);
                     }
@@ -366,36 +366,36 @@
             const matchesPerTerm = new Map();
 
             storedData.forEach(fileData => {
-                const lines = fileData.data.split("\n");
-                if (lines.length < 2) return;
+                const rows = fileData.data;
+                if (rows.length === 0) return;
 
-                const headers = lines[0].split("\t");
-                const remarksIndex = headers.length - 1;
-
+                const headers = Object.keys(rows[0]);
+                
                 let fileResults = [];
 
-                for (let i = 1; i < lines.length; i++) {
-                    const line = lines[i];
-                    let cols = line.split("\t");
+                rows.forEach((row, index) => {
                     let matched = false;
-                    let highlightedCols = cols.map(col => {
-                        let highlighted = col;
+                    const highlightedRow = {};
+                    
+                    for (const key in row) {
+                        const value = String(row[key]);
+                        let highlightedValue = value;
                         terms.forEach(term => {
                             const regex = new RegExp(`(${term})`, "gi");
-                            if (regex.test(col)) {
+                            if (regex.test(value)) {
                                 matched = true;
-                                highlighted = highlighted.replace(regex, "<span class='highlight'>$1</span>");
+                                highlightedValue = highlightedValue.replace(regex, "<span class='highlight'>$1</span>");
                                 // Increment the count for the matched term
                                 matchesPerTerm.set(term, (matchesPerTerm.get(term) || 0) + 1);
                             }
                         });
-                        return highlighted;
-                    });
+                        highlightedRow[key] = highlightedValue;
+                    }
 
                     if (matched) {
-                        fileResults.push({ lineNo: i + 1, data: highlightedCols });
+                        fileResults.push({ lineNo: index + 2, data: highlightedRow });
                     }
-                }
+                });
 
                 const fileResultsWithSerial = fileResults.map(row => ({
                     ...row,
@@ -423,7 +423,7 @@
                                         const uniqueId = `result-${fileData.fileName.replace(/\s/g, '-')}-${row.serialNumber}`;
                                         return `<tr id="${uniqueId}" data-line-no="${row.lineNo}" data-file-name="${fileData.fileName}">
                                                 <td>${row.serialNumber}</td>
-                                                ${row.data.map(cell => `<td>${cell}</td>`).join("")}
+                                                ${headers.map(h => `<td>${row.data[h]}</td>`).join("")}
                                             </tr>`;
                                     }).join("")}
                                 </tbody>
